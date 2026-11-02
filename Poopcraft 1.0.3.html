@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -33,6 +34,16 @@
     padding-bottom: calc(3vh + env(safe-area-inset-bottom,0px));
   }
   @keyframes panPan{ from{ background-position: 0 0, center 35%; } to{ background-position: -2048px 0, center 35%; } }
+
+  /* ---------- INTRO SPLASH ---------- */
+  #introScreen{ background:#000; }
+  #introLogoText{ font-family:'Press Start 2P', monospace; font-size:clamp(28px,6.5vw,56px); color:#fff; letter-spacing:1px; text-align:center;
+    animation: introPulse 2.2s ease-in-out infinite; }
+  #introStudioText{ font-family:'Press Start 2P', monospace; font-size:clamp(11px,2.2vw,17px); color:#fff; letter-spacing:9px; text-align:center;
+    margin-top:16px; animation: introPulse 2.2s ease-in-out infinite; animation-delay:0.12s; }
+  @keyframes introPulse{ 0%,100%{ opacity:1; } 50%{ opacity:0.45; } }
+  #introBar{ width:220px; height:3px; background:rgba(255,255,255,0.14); overflow:hidden; border-radius:2px; margin-top:34px; }
+  #introBarFill{ height:100%; width:0%; background:#fff; border-radius:2px; }
 
   #logoWrap{ position:relative; text-align:center; margin-bottom:2vh; z-index:2; }
   #logo, .logo-text{ font-family:'Press Start 2P', monospace; font-size:clamp(26px,6vw,64px); color:#efe3c9; letter-spacing:2px;
@@ -321,13 +332,11 @@
   </div>
 
   <!-- INTRO SCREEN (top-level, must render before gameContainer/titleScreen exist) -->
-  <div id="introScreen" style="display:none; position:absolute; inset:0; z-index:50; background:linear-gradient(135deg, #1a1a2e, #16213e); flex-direction:column; align-items:center; justify-content:center; gap:20px;">
-    <div id="introStudioText" style="font-family:'Press Start 2P'; font-size:20px; color:#fff; letter-spacing:2px; opacity:0.92; margin-bottom:6px; text-align:center;">POOPCRAFT STUDIOS</div>
-    <img id="introLogo" src="" style="width:120px; height:120px; image-rendering:pixelated;">
-    <div id="introBar" style="width:280px; height:20px; background:#333; border:2px solid #555; overflow:hidden;">
-      <div id="introBarFill" style="height:100%; width:0%; background:linear-gradient(90deg, #7CFC00, #00ff00); transition:width 0.3s;"></div>
-    </div>
-    <div id="introPercent" style="font-family:'Press Start 2P'; font-size:14px; color:#7CFC00;">0%</div>
+  <div id="introScreen" style="display:none; position:absolute; inset:0; z-index:50; flex-direction:column; align-items:center; justify-content:center;">
+    <div id="introLogoText">Sharpcraft</div>
+    <div id="introStudioText">STUDIOS</div>
+    <div id="introBar"><div id="introBarFill"></div></div>
+    <img id="introLogo" src="" style="display:none;">
   </div>
 
   <!-- PICK USERNAME SCREEN (EaglerCraft-style: just a name, no accounts) -->
@@ -3020,18 +3029,21 @@ function saveSkin(skin){ try{ localStorage.setItem('poopcraft_skin', JSON.string
 function startIntro(){
   document.getElementById('titleScreen').style.display='none';
   document.getElementById('introScreen').style.display='flex';
-  document.getElementById('introLogo').src = 'data:image/png;base64,'+window.__INTRO_LOGO_BASE64__;
   playIntroAudio();
-  let progress = 0;
-  const progressInterval = setInterval(()=>{
-    progress = Math.min(100, progress + Math.random()*22);
-    document.getElementById('introBarFill').style.width = progress+'%';
-    document.getElementById('introPercent').textContent = Math.floor(progress)+'%';
-    if(progress>=100){
-      clearInterval(progressInterval);
-      setTimeout(proceedFromIntro, 400);
+  const fill = document.getElementById('introBarFill');
+  const duration = 2000; // ms
+  const startTime = performance.now();
+  function tick(now){
+    const t = Math.min(1, (now-startTime)/duration);
+    const eased = 1 - Math.pow(1-t, 3); // smooth ease-out, no jumps
+    fill.style.width = (eased*100)+'%';
+    if(t<1){
+      requestAnimationFrame(tick);
+    } else {
+      setTimeout(proceedFromIntro, 350);
     }
-  }, 220);
+  }
+  requestAnimationFrame(tick);
 }
 function proceedFromIntro(){
   document.getElementById('introScreen').style.display='none';
